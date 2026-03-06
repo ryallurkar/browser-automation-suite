@@ -16,7 +16,7 @@ test('login and verify portfolio value', async ({ page }) => {
   const loginPage = new LoginPage(page);
 
   // Clear inbox before starting (Option B)
-  await loginPage.clearInbox();
+  await loginPage.clearInbox(username);
 
   // Login flow
   await loginPage.goto();
@@ -29,7 +29,7 @@ test('login and verify portfolio value', async ({ page }) => {
   await loginPage.waitForDeviceApprovalScreen();
 
   // Get fresh approval email only
-  const approvalLink = await loginPage.waitForDeviceApprovalEmail(loginTime);
+  const approvalLink = await loginPage.waitForDeviceApprovalEmail(loginTime, username);
 
   const approvalPage = new DeviceApprovalPage(page);
   await approvalPage.clickApprovalLink(approvalLink);

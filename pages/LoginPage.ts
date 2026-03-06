@@ -69,12 +69,12 @@ export class LoginPage {
     }
   }
 
-  async clearInbox(): Promise<void> {
-    await this.mailosaurSupport.clearInbox();
+  async clearInbox(username: string): Promise<void> {
+    await this.mailosaurSupport.clearInbox(username);
   }
 
-  async waitForDeviceApprovalEmail(receivedAfter: Date): Promise<string> {
-    return this.mailosaurSupport.waitForDeviceApprovalEmail(receivedAfter);
+  async waitForDeviceApprovalEmail(receivedAfter: Date, username: string): Promise<string> {
+    return this.mailosaurSupport.waitForDeviceApprovalEmail(receivedAfter, username);
   }
 
 }

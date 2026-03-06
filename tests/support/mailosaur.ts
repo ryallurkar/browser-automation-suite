@@ -7,27 +7,48 @@ export type MailosaurCleanupMode = 'combined' | 'clear-before' | 'delete-single'
 export class MailosaurSupport {
   private readonly client: MailosaurClient;
   private readonly serverId: string;
-  private readonly sentTo: string;
   private readonly cleanupMode: MailosaurCleanupMode;
 
   constructor() {
     this.client = new MailosaurClient(getRequiredEnv('MAILOSAUR_API_KEY'));
     this.serverId = getRequiredEnv('MAILOSAUR_SERVER_ID');
-    this.sentTo = getRequiredEnv('TEST_USERNAME');
     this.cleanupMode = this.getCleanupMode();
   }
 
-  async clearInbox(): Promise<void> {
+  async clearInbox(sentTo: string): Promise<void> {
     if (this.cleanupMode !== 'combined' && this.cleanupMode !== 'clear-before') {
       console.log(`🧹 Inbox clear skipped (MAILOSAUR_CLEANUP_MODE=${this.cleanupMode})`);
       return;
     }
 
-    await this.client.messages.deleteAll(this.serverId);
-    console.log('🗑️ Inbox cleared before test');
+    const cleanupWindowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    let page = 0;
+    let deletedCount = 0;
+
+    while (true) {
+      const result = await this.client.messages.search(
+        this.serverId,
+        { sentTo },
+        { receivedAfter: cleanupWindowStart, page, itemsPerPage: 100 },
+      );
+
+      const messages = result.items ?? [];
+      if (messages.length === 0) {
+        break;
+      }
+
+      for (const message of messages) {
+        await this.client.messages.del(message.id);
+        deletedCount += 1;
+      }
+
+      page += 1;
+    }
+
+    console.log(`🗑️ Inbox cleanup completed for ${sentTo}; deleted ${deletedCount} message(s)`);
   }
 
-  async waitForDeviceApprovalEmail(receivedAfter: Date): Promise<string> {
+  async waitForDeviceApprovalEmail(receivedAfter: Date, sentTo: string): Promise<string> {
     const filterAfter = new Date(receivedAfter);
     filterAfter.setSeconds(filterAfter.getSeconds() - 10);
 
@@ -35,7 +56,7 @@ export class MailosaurSupport {
 
     const email = await this.client.messages.get(
       this.serverId,
-      { sentTo: this.sentTo },
+      { sentTo },
       { receivedAfter: filterAfter },
     );
 
@@ -57,9 +78,9 @@ export class MailosaurSupport {
     return approvalLink;
   }
 
-  private extractApprovalLink(links: any[]): string {
+  private extractApprovalLink(links: Array<{ href?: string }>): string {
     const approvalLink = links.find(
-      (link: any) =>
+      (link) =>
         typeof link.href === 'string' &&
         (link.href.includes('/new-device-sign-in/web?code=') ||
           link.href.includes('approve') ||
