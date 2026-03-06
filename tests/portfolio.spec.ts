@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import dotenv from 'dotenv';
 
-import { DeviceApprovalPage } from './pages/DeviceApprovalPage';
-import { LoginPage } from './pages/LoginPage';
-import { PortfolioPage } from './pages/PortfolioPage';
+import { DeviceApprovalPage } from '../pages/DeviceApprovalPage';
+import { LoginPage } from '../pages/LoginPage';
+import { PortfolioPage } from '../pages/PortfolioPage';
 import { getRequiredEnv } from './support/env';
 
 dotenv.config({ quiet: true })

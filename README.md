@@ -1,4 +1,4 @@
-# Portfolio Validator
+# Browser Automation Suite
 
 Playwright + TypeScript acceptance tests with automated device-approval email handling.
 
@@ -13,7 +13,7 @@ Playwright + TypeScript acceptance tests with automated device-approval email ha
 1. Create an account on Mailosaur
 2. Note your Server ID from the dashboard
 3. Get your API key from the API section
-4. Register your exchange account email as `anything@YOUR_SERVER_ID.mailosaur.net`
+4. Register your platform account email as `anything@YOUR_SERVER_ID.mailosaur.net`
 5. Add both Mailosaur values to `.env`
 
 ## Installation
