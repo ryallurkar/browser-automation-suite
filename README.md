@@ -6,7 +6,7 @@ Playwright + TypeScript acceptance tests with automated device-approval email ha
 
 - Node.js 18+
 - Mailosaur account
-- Exchange account registered with a Mailosaur inbox address
+- Account registered with a Mailosaur inbox address
 
 ## Mailosaur Setup
 
@@ -32,7 +32,6 @@ Playwright + TypeScript acceptance tests with automated device-approval email ha
    - `BASE_URL`
    - `MAILOSAUR_API_KEY`
    - `MAILOSAUR_SERVER_ID`
-   - `MAILOSAUR_CLEANUP_MODE` (`combined`, `clear-before`, `delete-single`, `filter-only`)
 
 ## Running Tests
 
