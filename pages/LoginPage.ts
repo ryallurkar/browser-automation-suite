@@ -1,10 +1,7 @@
 import { expect, Locator, Page } from '@playwright/test';
-import dotenv from 'dotenv';
 
 import { loadAppConfig } from '../tests/support/config';
 import { MailosaurSupport } from '../tests/support/mailosaur';
-
-dotenv.config({ quiet: true })
 
 export class LoginPage {
   private readonly appConfig = loadAppConfig();
