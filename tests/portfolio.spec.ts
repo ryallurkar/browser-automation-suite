@@ -39,6 +39,6 @@ test('login and verify portfolio value', async ({ page }) => {
   const portfolioPage = new PortfolioPage(page);
   const value = await portfolioPage.getPortfolioValue();
   expect(value).toContain(expectedPortfolioValue);
-  await page.getByRole('button').filter({ hasText: /^$/ }).nth(3).click();
+  await page.getByRole('button').filter({ hasText: /^$/ }).nth(3).click(); // Bad selector, should be improved, but that's the only way to click the user menu in the header from codegen
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
 });

@@ -1,16 +1,14 @@
 import { expect, Locator, Page } from '@playwright/test';
 import dotenv from 'dotenv';
-import MailosaurClient from 'mailosaur';
 
 import { loadAppConfig } from '../support/config';
-import { getRequiredEnv } from '../support/env';
+import { MailosaurSupport } from '../support/mailosaur';
 
 dotenv.config({ quiet: true })
 
-type MailCleanupMode = 'combined' | 'clear-before' | 'delete-single' | 'filter-only';
-
 export class LoginPage {
   private readonly appConfig = loadAppConfig();
+  private readonly mailosaurSupport = new MailosaurSupport();
   private readonly usernameField: Locator;
   private readonly passwordField: Locator;
   private readonly submitButton: Locator;
@@ -72,82 +70,11 @@ export class LoginPage {
   }
 
   async clearInbox(): Promise<void> {
-    const mode = this.getCleanupMode();
-    if (mode !== 'combined' && mode !== 'clear-before') {
-      console.log(`🧹 Inbox clear skipped (MAILOSAUR_CLEANUP_MODE=${mode})`);
-      return;
-    }
-
-    const mailosaur = new MailosaurClient(getRequiredEnv('MAILOSAUR_API_KEY'));
-    const serverId = getRequiredEnv('MAILOSAUR_SERVER_ID');
-
-    await mailosaur.messages.deleteAll(serverId);
-    console.log('🗑️ Inbox cleared before test');
+    await this.mailosaurSupport.clearInbox();
   }
 
   async waitForDeviceApprovalEmail(receivedAfter: Date): Promise<string> {
-    const mode = this.getCleanupMode();
-    const mailosaur = new MailosaurClient(getRequiredEnv('MAILOSAUR_API_KEY'));
-    const serverId = getRequiredEnv('MAILOSAUR_SERVER_ID');
-    const sentTo = getRequiredEnv('TEST_USERNAME');
-
-    const filterAfter = new Date(receivedAfter);
-    filterAfter.setSeconds(filterAfter.getSeconds() - 10);
-
-    console.log('📧 Waiting for device approval email...');
-
-    const email = await mailosaur.messages.get(
-      serverId,
-      { sentTo },
-      { receivedAfter: filterAfter },
-    );
-
-    console.log(`✅ Fresh email received: at ${email.received}`);
-
-    // TODO: verify exact device-approval link pattern in the real email template.
-    const links = email.html?.links ?? [];
-    const approvalLink = links.find(
-      (link: any) =>
-        typeof link.href === 'string' &&
-        (link.href.includes('/new-device-sign-in/web?code=') ||
-          link.href.includes('approve') ||
-          link.href.includes('device') ||
-          link.href.includes('confirm') ||
-          link.href.includes('activate')),
-    );
-
-    if (!approvalLink?.href) {
-      console.log('🔍 All links found in email:');
-      for (const link of links) {
-        if (link?.href) {
-          console.log(` - ${link.href}`);
-        }
-      }
-      throw new Error('Approval link not found in email. Check console for all available links.');
-    }
-
-    if (mode === 'combined' || mode === 'delete-single') {
-      if (email.id) {
-        await mailosaur.messages.del(email.id);
-        console.log('🗑️ Email deleted from inbox');
-      } else {
-        console.log('⚠️ Email id missing, cannot delete message after use');
-      }
-    } else {
-      console.log(`🧹 Single email delete skipped (MAILOSAUR_CLEANUP_MODE=${mode})`);
-    }
-
-    return approvalLink.href;
-  }
-
-  private getCleanupMode(): MailCleanupMode {
-    const raw = (process.env.MAILOSAUR_CLEANUP_MODE ?? 'combined').trim().toLowerCase();
-    const allowed: MailCleanupMode[] = ['combined', 'clear-before', 'delete-single', 'filter-only'];
-    if (allowed.includes(raw as MailCleanupMode)) {
-      return raw as MailCleanupMode;
-    }
-    console.log(`⚠️ Unknown MAILOSAUR_CLEANUP_MODE="${raw}", defaulting to combined`);
-    return 'combined';
+    return this.mailosaurSupport.waitForDeviceApprovalEmail(receivedAfter);
   }
 
 }
