@@ -1,4 +1,4 @@
-import { expect, Page } from "@playwright/test";
+import { Page } from "@playwright/test";
 
 export class TwoFactorAuthentication {
   constructor(private readonly page: Page) {}
@@ -11,7 +11,7 @@ export class TwoFactorAuthentication {
       await maybeLaterButton.waitFor({ state: "visible", timeout: 10_000 });
       await maybeLaterButton.click();
     } catch {
-      console.log("modal didn't appear");
+      // modal did not appear within timeout — continue
     }
   }
 }
