@@ -36,7 +36,6 @@ export class LoginPage {
   }
 
   async checkForRateLimit(): Promise<void> {
-    // TODO: verify exact text and selector for the rate-limit message on the real page.
     const rateLimitVisible = await this.page
       .locator("text=tried too many times")
       .isVisible()
@@ -49,7 +48,7 @@ export class LoginPage {
     }
   }
 
-  async acceptCookiesIfVisible(): Promise<void> {
+  async rejectCookiesIfVisible(): Promise<void> {
     if (await this.rejectCookiesButton.isVisible().catch(() => false)) {
       await this.rejectCookiesButton.click();
     }

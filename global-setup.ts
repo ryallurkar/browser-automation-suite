@@ -3,17 +3,14 @@ import { test as setup } from "@playwright/test";
 import { DeviceApprovalPage } from "./pages/DeviceApprovalPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
-import { loadAppConfig } from "./support/config";
-import { getRequiredEnv } from "./support/env";
-import { MailosaurSupport } from "./support/mailosaur";
+import { getRequiredEnv } from "./tests/support/env";
+import { MailosaurSupport } from "./tests/support/mailosaur";
 
 setup("authenticate and save state", async ({ page }) => {
-  const { baseUrl } = loadAppConfig();
-  const url = process.env.BASE_URL ?? baseUrl;
   const username = getRequiredEnv("TEST_USERNAME");
   const password = getRequiredEnv("TEST_PASSWORD");
 
-  const loginPage = new LoginPage(page, url);
+  const loginPage = new LoginPage(page);
   const approvalPage = new DeviceApprovalPage(page);
   const homePage = new HomePage(page);
   const mailosaur = new MailosaurSupport();
@@ -25,7 +22,7 @@ setup("authenticate and save state", async ({ page }) => {
 
   const loginTime = new Date();
   await loginPage.login(username, password);
-  await approvalPage.waitForApprovalScreen();
+  await loginPage.waitForDeviceApprovalScreen();
 
   const approvalLink = await mailosaur.waitForDeviceApprovalEmail(
     loginTime,

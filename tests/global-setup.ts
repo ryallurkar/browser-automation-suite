@@ -1,11 +1,11 @@
 import { test as setup } from "@playwright/test";
 
-import { DeviceApprovalPage } from "./pages/DeviceApprovalPage";
-import { HomePage } from "./pages/HomePage";
-import { LoginPage } from "./pages/LoginPage";
-import { loadAppConfig } from "./support/config";
-import { getRequiredEnv } from "./support/env";
-import { MailosaurSupport } from "./support/mailosaur";
+import { DeviceApprovalPage } from "../pages/DeviceApprovalPage";
+import { HomePage } from "../pages/HomePage";
+import { LoginPage } from "../pages/LoginPage";
+import { loadAppConfig } from "../support/config";
+import { getRequiredEnv } from "../support/env";
+import { MailosaurSupport } from "../support/mailosaur";
 
 setup("authenticate and save state", async ({ page }) => {
   const { baseUrl } = loadAppConfig();
