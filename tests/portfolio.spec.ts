@@ -1,41 +1,42 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from "../support/fixtures";
+import { loadAppConfig } from "../support/config";
 
-import { DeviceApprovalPage } from '../pages/DeviceApprovalPage';
-import { LoginPage } from '../pages/LoginPage';
-import { PortfolioPage } from '../pages/PortfolioPage';
-import { getRequiredEnv } from './support/env';
+// auth.json is loaded automatically via storageState in playwright.config.ts
+// auth-setup.ts handles login, device approval and modal dismissal once before all tests
 
-test('login and verify portfolio value', async ({ page }) => {
-  const expectedPortfolioValue = getRequiredEnv('EXPECTED_PORTFOLIO_VALUE');
-  const username = getRequiredEnv('TEST_USERNAME');
-  const password = getRequiredEnv('TEST_PASSWORD');
+test.beforeEach(async ({ page, homePage }) => {
+  const { baseUrl } = loadAppConfig();
+  const root = process.env.BASE_URL ?? baseUrl;
+  await page.goto(`${root}/c`, { waitUntil: "domcontentloaded" });
+  await homePage.dismissPasskeyModalIfVisible(); // passkey prompt
+  await homePage.assertHomeLoaded(); // ensure home is stable
+  await homePage.dismissPasskeyModalIfVisible(); // 2FA setup prompt (delayed)
+});
 
-  const loginPage = new LoginPage(page);
+test("verify portfolio value is correct", async ({
+  homePage,
+  portfolioPage,
+  testData,
+}) => {
+  await test.step("Navigate to portfolio from home", async () => {
+    await homePage.goToPortfolio();
+  });
 
-  // Clear inbox before starting (Option B)
-  await loginPage.clearInbox(username);
+  await test.step("Verify portfolio value matches expected", async () => {
+    const value = await portfolioPage.getPortfolioValue();
+    expect(value).toContain(testData.expectedPortfolioValue);
+  });
+});
 
-  // Login flow
-  await loginPage.goto();
-  await loginPage.acceptCookiesIfVisible();
+test("verify portfolio page loads successfully", async ({
+  homePage,
+  portfolioPage,
+}) => {
+  await test.step("Navigate to portfolio from home", async () => {
+    await homePage.goToPortfolio();
+  });
 
-  // Record timestamp before login (Option C)
-  const loginTime = new Date();
-
-  await loginPage.login(username, password);
-  await loginPage.waitForDeviceApprovalScreen();
-
-  // Get fresh approval email only
-  const approvalLink = await loginPage.waitForDeviceApprovalEmail(loginTime, username);
-
-  const approvalPage = new DeviceApprovalPage(page);
-  await approvalPage.clickApprovalLink(approvalLink);
-
-  await page.getByRole('link', { name: 'Portfolio' }).click();
-
-  const portfolioPage = new PortfolioPage(page);
-  const value = await portfolioPage.getPortfolioValue();
-  expect(value).toContain(expectedPortfolioValue);
-  await page.getByRole('button').filter({ hasText: /^$/ }).nth(3).click(); // Bad selector, should be improved, but that's the only way to click the user menu in the header from codegen
-  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await test.step("Verify portfolio value element is visible", async () => {
+    await expect(portfolioPage.portfolioValueElement).toBeVisible();
+  });
 });

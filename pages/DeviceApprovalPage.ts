@@ -1,19 +1,27 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from "@playwright/test";
+import { TwoFactorAuthentication } from "./component/TwoFactorAuthentication";
 
 export class DeviceApprovalPage {
-  constructor(private readonly page: Page) {}
+  private readonly twoFactorAuthentication: TwoFactorAuthentication;
+  private readonly approvalScreenText: Locator;
+
+  constructor(private readonly page: Page) {
+    this.twoFactorAuthentication = new TwoFactorAuthentication(page);
+    this.approvalScreenText = this.page.getByText(
+      /Use same internet connection/i,
+    );
+  }
+
+  async waitForApprovalScreen(): Promise<void> {
+    await this.page.waitForURL(/\/device-approval/);
+    await expect(this.approvalScreenText).toBeVisible();
+  }
 
   async clickApprovalLink(link: string): Promise<void> {
-    await this.page.goto(link, { waitUntil: 'domcontentloaded' });
+    await this.page.goto(link, { waitUntil: "domcontentloaded" });
+  }
 
-    await expect(this.page.getByText(/Approving new device/i)).toBeVisible();
-
-    const addPasskeyButton = this.page.getByRole('button', { name: 'Add passkey' });
-    await expect(addPasskeyButton).toBeVisible();
-
-    const maybeLaterButton = this.page.getByRole('button', { name: 'Maybe later' });
-    await expect(maybeLaterButton).toBeVisible();
-    await maybeLaterButton.click();
-    await expect(this.page.getByRole('link', { name: 'Home' })).toBeVisible();
+  async dismissPasskeyModalIfVisible(): Promise<void> {
+    await this.twoFactorAuthentication.dismissPasskeyModalIfVisible();
   }
 }
