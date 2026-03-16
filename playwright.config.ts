@@ -11,6 +11,8 @@ export default defineConfig({
   retries: 1,
   timeout: 60000,
   use: {
+    ...devices["Desktop Chrome"],
+    channel: "chrome",
     actionTimeout: 10000,
     navigationTimeout: 30000,
     trace: "retain-on-failure",
@@ -25,10 +27,7 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "auth.json",
-      },
+      use: { storageState: "auth.json" },
       dependencies: ["setup"],
     },
   ],
