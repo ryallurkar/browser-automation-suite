@@ -1,8 +1,12 @@
-import MailosaurClient from 'mailosaur';
+import MailosaurClient from "mailosaur";
 
-import { getRequiredEnv } from './env';
+import { getRequiredEnv } from "./env";
 
-export type MailosaurCleanupMode = 'combined' | 'clear-before' | 'delete-single' | 'filter-only';
+export type MailosaurCleanupMode =
+  | "combined"
+  | "clear-before"
+  | "delete-single"
+  | "filter-only";
 
 export class MailosaurSupport {
   private readonly client: MailosaurClient;
@@ -10,14 +14,19 @@ export class MailosaurSupport {
   private readonly cleanupMode: MailosaurCleanupMode;
 
   constructor() {
-    this.client = new MailosaurClient(getRequiredEnv('MAILOSAUR_API_KEY'));
-    this.serverId = getRequiredEnv('MAILOSAUR_SERVER_ID');
+    this.client = new MailosaurClient(getRequiredEnv("MAILOSAUR_API_KEY"));
+    this.serverId = getRequiredEnv("MAILOSAUR_SERVER_ID");
     this.cleanupMode = this.getCleanupMode();
   }
 
   async clearInbox(sentTo: string): Promise<void> {
-    if (this.cleanupMode !== 'combined' && this.cleanupMode !== 'clear-before') {
-      console.log(`🧹 Inbox clear skipped (MAILOSAUR_CLEANUP_MODE=${this.cleanupMode})`);
+    if (
+      this.cleanupMode !== "combined" &&
+      this.cleanupMode !== "clear-before"
+    ) {
+      console.log(
+        `🧹 Inbox clear skipped (MAILOSAUR_CLEANUP_MODE=${this.cleanupMode})`,
+      );
       return;
     }
 
@@ -45,14 +54,17 @@ export class MailosaurSupport {
       page += 1;
     }
 
-    console.log(`🗑️ Inbox cleanup completed for ${sentTo}; deleted ${deletedCount} message(s)`);
+    console.log(`🗑️ Inbox cleanup completed for account`);
   }
 
-  async waitForDeviceApprovalEmail(receivedAfter: Date, sentTo: string): Promise<string> {
+  async waitForDeviceApprovalEmail(
+    receivedAfter: Date,
+    sentTo: string,
+  ): Promise<string> {
     const filterAfter = new Date(receivedAfter);
     filterAfter.setSeconds(filterAfter.getSeconds() - 10);
 
-    console.log('📧 Waiting for device approval email...');
+    console.log("📧 Waiting for device approval email...");
 
     const email = await this.client.messages.get(
       this.serverId,
@@ -64,15 +76,20 @@ export class MailosaurSupport {
 
     const approvalLink = this.extractApprovalLink(email.html?.links ?? []);
 
-    if (this.cleanupMode === 'combined' || this.cleanupMode === 'delete-single') {
+    if (
+      this.cleanupMode === "combined" ||
+      this.cleanupMode === "delete-single"
+    ) {
       if (email.id) {
         await this.client.messages.del(email.id);
-        console.log('🗑️ Email deleted from inbox');
+        console.log("🗑️ Email deleted from inbox");
       } else {
-        console.log('⚠️ Email id missing, cannot delete message after use');
+        console.log("⚠️ Email id missing, cannot delete message after use");
       }
     } else {
-      console.log(`🧹 Single email delete skipped (MAILOSAUR_CLEANUP_MODE=${this.cleanupMode})`);
+      console.log(
+        `🧹 Single email delete skipped (MAILOSAUR_CLEANUP_MODE=${this.cleanupMode})`,
+      );
     }
 
     return approvalLink;
@@ -81,34 +98,45 @@ export class MailosaurSupport {
   private extractApprovalLink(links: Array<{ href?: string }>): string {
     const approvalLink = links.find(
       (link) =>
-        typeof link.href === 'string' &&
-        (link.href.includes('/new-device-sign-in/web?code=') ||
-          link.href.includes('approve') ||
-          link.href.includes('device') ||
-          link.href.includes('confirm') ||
-          link.href.includes('activate')),
+        typeof link.href === "string" &&
+        (link.href.includes("/new-device-sign-in/web?code=") ||
+          link.href.includes("approve") ||
+          link.href.includes("device") ||
+          link.href.includes("confirm") ||
+          link.href.includes("activate")),
     );
 
     if (!approvalLink?.href) {
-      console.log('🔍 All links found in email:');
+      console.log("🔍 All links found in email:");
       for (const link of links) {
         if (link?.href) {
           console.log(` - ${link.href}`);
         }
       }
-      throw new Error('Approval link not found in email. Check console for all available links.');
+      throw new Error(
+        "Approval link not found in email. Check console for all available links.",
+      );
     }
 
     return approvalLink.href;
   }
 
   private getCleanupMode(): MailosaurCleanupMode {
-    const raw = (process.env.MAILOSAUR_CLEANUP_MODE ?? 'combined').trim().toLowerCase();
-    const allowed: MailosaurCleanupMode[] = ['combined', 'clear-before', 'delete-single', 'filter-only'];
+    const raw = (process.env.MAILOSAUR_CLEANUP_MODE ?? "combined")
+      .trim()
+      .toLowerCase();
+    const allowed: MailosaurCleanupMode[] = [
+      "combined",
+      "clear-before",
+      "delete-single",
+      "filter-only",
+    ];
     if (allowed.includes(raw as MailosaurCleanupMode)) {
       return raw as MailosaurCleanupMode;
     }
-    console.log(`⚠️ Unknown MAILOSAUR_CLEANUP_MODE="${raw}", defaulting to combined`);
-    return 'combined';
+    console.log(
+      `⚠️ Unknown MAILOSAUR_CLEANUP_MODE="${raw}", defaulting to combined`,
+    );
+    return "combined";
   }
 }
