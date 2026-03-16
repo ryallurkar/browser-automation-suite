@@ -11,7 +11,6 @@ export default defineConfig({
   retries: 1,
   timeout: 60000,
   use: {
-    headless: process.env.CI === "true",
     actionTimeout: 10000,
     navigationTimeout: 30000,
     trace: "retain-on-failure",
